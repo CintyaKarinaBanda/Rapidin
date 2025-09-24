@@ -6,7 +6,7 @@
 
 ## Descripción
 
-Aplicación móvil para la gestión de pedidos en restaurantes, diseñada para operar desde 1-5 locales con capacidad de escalabilidad. Incluye soporte offline robusto para garantizar operación continua sin conectividad.
+Aplicación móvil para la gestión de pedidos en restaurantes, diseñada para operar con capacidad de escalabilidad. Incluye soporte offline robusto para garantizar operación continua sin conectividad.
 
 ### Características principales
 - **Sincronización offline/online** automática
