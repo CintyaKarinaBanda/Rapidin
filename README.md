@@ -49,7 +49,7 @@ lib/
 
 1. **Clonar repositorio**
    ```bash
-   git clone <url-del-repo>
+   git clone https://github.com/CintyaKarinaBanda/Rapidin
    cd rapidin
    ```
 
