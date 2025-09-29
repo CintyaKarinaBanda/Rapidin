@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Rapidin - Gestión de Pedidos para Restaurantes
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=flat&logo=flutter&logoColor=white)
@@ -102,6 +103,8 @@ flutter build ios --release
 - [ ] Integración con sistemas POS
 - [ ] Dashboard web para administradores
 =======
+=======
+>>>>>>> ea40f5b5502b3afac10d1297465db0e4c0edbe87
 # rapidin
 
 A new Flutter project.
@@ -118,4 +121,7 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+<<<<<<< HEAD
 >>>>>>> ea40f5b (davai)
+=======
+>>>>>>> ea40f5b5502b3afac10d1297465db0e4c0edbe87
