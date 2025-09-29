@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "218857517743",
+    "project_id": "rapidin-41a68",
+    "storage_bucket": "rapidin-41a68.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:218857517743:android:66f9547d3a12163a8e5a5a",
+        "android_client_info": {
+          "package_name": "com.example.rapidin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCix5ZhfPJOsPb-Yxfqsy_PsDHfzXLCyhY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
