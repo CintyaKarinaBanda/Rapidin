@@ -47,6 +47,12 @@ class HomeView extends StatelessWidget {
       'image': '🥗',
       'description': 'Lechuga, pollo, crutones y aderezo'
     },
+    {
+      'name': 'Chescake de Fresa',
+      'price': 7.99,
+      'image': '🧁',
+      'description': 'Rebanada de Pastel de queso con Fresas'
+    },
   ];
 
   @override
@@ -71,35 +77,6 @@ class HomeView extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.orange.shade400, Colors.orange.shade600],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '¡Bienvenido!',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  'Elige tus platillos favoritos',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
-            ),
-          ),
           
           // Menu Grid
           Expanded(
