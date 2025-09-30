@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart'; // Generated file
 import 'login_view.dart';
 import 'auth_manager.dart';
+import 'home_view.dart';
 
 void main() async {
   // Ensure Flutter is initialized before Firebase
@@ -42,7 +43,8 @@ class MyApp extends StatelessWidget {
 
           // If user is logged in, go to home
           if (snapshot.hasData) {
-            return const HomeView();
+            final user = AuthManager().currentUser;
+            return HomeView(email: user?.email ?? '');
           }
 
           // Otherwise show login
@@ -54,55 +56,4 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Import the HomeView from login_view.dart or create it here
-class HomeView extends StatelessWidget {
-  const HomeView({Key? key}) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    final authManager = AuthManager();
-    final user = authManager.currentUser;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await authManager.signOut();
-            },
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.check_circle_outline,
-              size: 100,
-              color: Colors.green,
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Welcome!',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              user?.email ?? 'No email',
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

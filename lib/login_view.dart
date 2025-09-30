@@ -35,13 +35,7 @@ class _LoginViewState extends State<LoginView> {
         password: _passwordController.text,
       );
 
-      if (mounted) {
-        // Navigate to home screen after successful login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeView()),
-        );
-      }
+      // Navigation is handled automatically by StreamBuilder in main.dart
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -77,11 +71,7 @@ class _LoginViewState extends State<LoginView> {
           ),
         );
 
-        // Navigate to home screen after successful signup
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeView()),
-        );
+        // Navigation is handled automatically by StreamBuilder in main.dart
       }
     } catch (e) {
       if (mounted) {
@@ -271,61 +261,4 @@ class _LoginViewState extends State<LoginView> {
   }
 }
 
-// Simple home view after login
-class HomeView extends StatelessWidget {
-  const HomeView({Key? key}) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    final authManager = AuthManager();
-    final user = authManager.currentUser;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await authManager.signOut();
-              if (context.mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginView()),
-                );
-              }
-            },
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.check_circle_outline,
-              size: 100,
-              color: Colors.green,
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Welcome!',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              user?.email ?? 'No email',
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

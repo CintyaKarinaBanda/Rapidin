@@ -1,132 +1,253 @@
 import 'package:flutter/material.dart';
-import 'login_view.dart';
+import 'auth_manager.dart';
 
 class HomeView extends StatelessWidget {
   final String email;
 
   const HomeView({Key? key, required this.email}) : super(key: key);
 
-  void _handleLogout(BuildContext context) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginView()),
-    );
+  void _handleLogout(BuildContext context) async {
+    await AuthManager().signOut();
   }
+
+  final List<Map<String, dynamic>> _menuItems = const [
+    {
+      'name': 'Pizza Margherita',
+      'price': 12.99,
+      'image': '🍕',
+      'description': 'Tomate, mozzarella y albahaca fresca'
+    },
+    {
+      'name': 'Hamburguesa Clásica',
+      'price': 9.99,
+      'image': '🍔',
+      'description': 'Carne, lechuga, tomate y queso'
+    },
+    {
+      'name': 'Tacos al Pastor',
+      'price': 8.50,
+      'image': '🌮',
+      'description': 'Carne al pastor con piña y cebolla'
+    },
+    {
+      'name': 'Sushi Roll',
+      'price': 15.99,
+      'image': '🍣',
+      'description': 'Salmón, aguacate y pepino'
+    },
+    {
+      'name': 'Pasta Carbonara',
+      'price': 11.50,
+      'image': '🍝',
+      'description': 'Pasta con bacon, huevo y parmesano'
+    },
+    {
+      'name': 'Ensalada César',
+      'price': 7.99,
+      'image': '🥗',
+      'description': 'Lechuga, pollo, crutones y aderezo'
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        title: const Text('Rapidin - Menú'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.shopping_cart),
+            onPressed: () {},
+            tooltip: 'Carrito',
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _handleLogout(context),
-            tooltip: 'Logout',
+            tooltip: 'Cerrar sesión',
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome Message
-            Text(
-              'Welcome!',
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+      body: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.orange.shade400, Colors.orange.shade600],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '¡Bienvenido!',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              email,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.grey[600],
+                ),
+                Text(
+                  'Elige tus platillos favoritos',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white70,
                   ),
+                ),
+              ],
             ),
-            const SizedBox(height: 32),
+          ),
+          
+          // Menu Grid
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.8,
+                ),
+                itemCount: _menuItems.length,
+                itemBuilder: (context, index) {
+                  final item = _menuItems[index];
+                  return _buildMenuCard(context, item);
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            // Dashboard Cards
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
+  Widget _buildMenuCard(BuildContext context, Map<String, dynamic> item) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: () => _showItemDetails(context, item),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image placeholder
+              Center(
+                child: Text(
+                  item['image'],
+                  style: const TextStyle(fontSize: 48),
+                ),
+              ),
+              const SizedBox(height: 8),
+              
+              // Name
+              Text(
+                item['name'],
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              
+              // Description
+              Text(
+                item['description'],
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.grey[600],
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const Spacer(),
+              
+              // Price and Add button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.person,
-                    title: 'Profile',
-                    color: Colors.blue,
-                    onTap: () {},
+                  Text(
+                    '\$${item['price'].toStringAsFixed(2)}',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.settings,
-                    title: 'Settings',
+                  IconButton(
+                    onPressed: () => _addToCart(context, item),
+                    icon: const Icon(Icons.add_circle),
                     color: Colors.orange,
-                    onTap: () {},
-                  ),
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.notifications,
-                    title: 'Notifications',
-                    color: Colors.green,
-                    onTap: () {},
-                  ),
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.help,
-                    title: 'Help',
-                    color: Colors.purple,
-                    onTap: () {},
+                    iconSize: 28,
                   ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildDashboardCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 48,
-                color: color,
+  void _showItemDetails(BuildContext context, Map<String, dynamic> item) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(item['name']),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              item['image'],
+              style: const TextStyle(fontSize: 64),
+            ),
+            const SizedBox(height: 16),
+            Text(item['description']),
+            const SizedBox(height: 16),
+            Text(
+              'Precio: \$${item['price'].toStringAsFixed(2)}',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.orange,
               ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _addToCart(context, item);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Agregar al carrito'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _addToCart(BuildContext context, Map<String, dynamic> item) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${item['name']} agregado al carrito'),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
       ),
     );
   }
