@@ -45,7 +45,7 @@ class HomeView extends StatelessWidget {
       'name': 'Ensalada César',
       'price': 7.99,
       'image': '🥗',
-      'description': 'Lechuga, pollo, crutones y aderezo'
+      'description': 'Lechuga , Jitomate, pollo, crutones y aderezo'
     },
   ];
 
