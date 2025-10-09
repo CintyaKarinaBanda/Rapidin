@@ -12,7 +12,7 @@ Aplicación móvil para la gestión de pedidos en restaurantes, diseñada para o
 
 ### Características principales
 - **Sincronización offline/online** automática
-- **Clean Architecture** con separación clara de responsabilidades
+- **Clean Architecture** con separación clara de las responsabilidades
 - **Firebase** para autenticación y notificaciones push
 - **Estado reactivo** con Riverpod
 - **Escalable** hacia microservicios
