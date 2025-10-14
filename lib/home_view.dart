@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'auth_manager.dart';
+import 'ble_module/screens/ble_monitor_screen.dart';
+import 'screens/product_detail_screen.dart';
+import 'screens/cart_screen.dart';
+import 'providers/cart_provider.dart';
 
 class HomeView extends StatelessWidget {
   final String email;
@@ -58,9 +63,50 @@ class HomeView extends StatelessWidget {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(Icons.shopping_cart),
-            onPressed: () {},
-            tooltip: 'Carrito',
+            icon: const Icon(Icons.bluetooth),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const BleMonitorScreen()),
+            ),
+            tooltip: 'BLE Monitor',
+          ),
+          Consumer<CartProvider>(
+            builder: (context, cart, child) => Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.shopping_cart),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CartScreen()),
+                  ),
+                  tooltip: 'Carrito',
+                ),
+                if (cart.itemCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        cart.itemCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -132,7 +178,12 @@ class HomeView extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
-        onTap: () => _showItemDetails(context, item),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailScreen(product: item),
+          ),
+        ),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -182,7 +233,16 @@ class HomeView extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: () => _addToCart(context, item),
+                    onPressed: () {
+                      Provider.of<CartProvider>(context, listen: false).addItem(item);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${item['name']} agregado al carrito'),
+                          backgroundColor: Colors.green,
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    },
                     icon: const Icon(Icons.add_circle),
                     color: Colors.orange,
                     iconSize: 28,
@@ -196,59 +256,7 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  void _showItemDetails(BuildContext context, Map<String, dynamic> item) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(item['name']),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              item['image'],
-              style: const TextStyle(fontSize: 64),
-            ),
-            const SizedBox(height: 16),
-            Text(item['description']),
-            const SizedBox(height: 16),
-            Text(
-              'Precio: \$${item['price'].toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.orange,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _addToCart(context, item);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Agregar al carrito'),
-          ),
-        ],
-      ),
-    );
-  }
 
-  void _addToCart(BuildContext context, Map<String, dynamic> item) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${item['name']} agregado al carrito'),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
+
+
 }
