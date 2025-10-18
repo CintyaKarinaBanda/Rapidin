@@ -16,10 +16,11 @@ void main() {
       expect(find.byType(MaterialApp), findsOneWidget);
     });
 
-    testWidgets('Should show login screen initially', (WidgetTester tester) async {
+    testWidgets('Should show login screen initially',
+        (WidgetTester tester) async {
       await tester.pumpWidget(const MyApp());
       await tester.pumpAndSettle();
-      
+
       // Verificar que la app se construye correctamente
       expect(find.byType(MaterialApp), findsOneWidget);
     });

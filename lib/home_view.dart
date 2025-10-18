@@ -168,29 +168,29 @@ class HomeView extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              
+
               // Name
               Text(
                 item['name'],
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
-              
+
               // Description
               Text(
                 item['description'],
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
-                ),
+                      color: Colors.grey[600],
+                    ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               const Spacer(),
-              
+
               // Price and Add button
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -198,13 +198,14 @@ class HomeView extends StatelessWidget {
                   Text(
                     '\$${item['price'].toStringAsFixed(2)}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.orange,
-                      fontWeight: FontWeight.bold,
-                    ),
+                          color: Colors.orange,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   IconButton(
                     onPressed: () {
-                      Provider.of<CartProvider>(context, listen: false).addItem(item);
+                      Provider.of<CartProvider>(context, listen: false)
+                          .addItem(item);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('${item['name']} agregado al carrito'),
@@ -225,8 +226,4 @@ class HomeView extends StatelessWidget {
       ),
     );
   }
-
-
-
-
 }

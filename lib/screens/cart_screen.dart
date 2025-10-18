@@ -90,7 +90,7 @@ class CartScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            
+
                             // Product Info
                             Expanded(
                               child: Column(
@@ -98,29 +98,38 @@ class CartScreen extends StatelessWidget {
                                 children: [
                                   Text(
                                     item.name,
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     '\$${item.price.toStringAsFixed(2)} c/u',
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: Colors.grey[600],
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: Colors.grey[600],
+                                        ),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     'Total: \$${item.totalPrice.toStringAsFixed(2)}',
-                                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                      color: Colors.orange,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(
+                                          color: Colors.orange,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
                                 ],
                               ),
                             ),
-                            
+
                             // Quantity Controls
                             Column(
                               children: [
@@ -128,27 +137,36 @@ class CartScreen extends StatelessWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      onPressed: () => cart.updateQuantity(item.name, item.quantity - 1),
-                                      icon: const Icon(Icons.remove_circle_outline),
+                                      onPressed: () => cart.updateQuantity(
+                                          item.name, item.quantity - 1),
+                                      icon: const Icon(
+                                          Icons.remove_circle_outline),
                                       color: Colors.orange,
-                                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                      constraints: const BoxConstraints(
+                                          minWidth: 32, minHeight: 32),
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 4),
                                       decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.orange),
+                                        border:
+                                            Border.all(color: Colors.orange),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
                                         item.quantity.toString(),
-                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold),
                                       ),
                                     ),
                                     IconButton(
-                                      onPressed: () => cart.updateQuantity(item.name, item.quantity + 1),
-                                      icon: const Icon(Icons.add_circle_outline),
+                                      onPressed: () => cart.updateQuantity(
+                                          item.name, item.quantity + 1),
+                                      icon:
+                                          const Icon(Icons.add_circle_outline),
                                       color: Colors.orange,
-                                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                      constraints: const BoxConstraints(
+                                          minWidth: 32, minHeight: 32),
                                     ),
                                   ],
                                 ),
@@ -156,7 +174,8 @@ class CartScreen extends StatelessWidget {
                                   onPressed: () => cart.removeItem(item.name),
                                   child: const Text(
                                     'Eliminar',
-                                    style: TextStyle(color: Colors.red, fontSize: 12),
+                                    style: TextStyle(
+                                        color: Colors.red, fontSize: 12),
                                   ),
                                 ),
                               ],
@@ -168,7 +187,7 @@ class CartScreen extends StatelessWidget {
                   },
                 ),
               ),
-              
+
               // Order Summary
               Container(
                 padding: const EdgeInsets.all(20),
@@ -194,10 +213,11 @@ class CartScreen extends StatelessWidget {
                         ),
                         Text(
                           '\$${cart.totalAmount.toStringAsFixed(2)}',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.orange,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                       ],
                     ),
@@ -238,7 +258,8 @@ class CartScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Vaciar Carrito'),
-        content: const Text('¿Estás seguro de que quieres eliminar todos los productos del carrito?'),
+        content: const Text(
+            '¿Estás seguro de que quieres eliminar todos los productos del carrito?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -258,7 +279,7 @@ class CartScreen extends StatelessWidget {
 
   void _showOrderConfirmation(BuildContext context) {
     final cart = Provider.of<CartProvider>(context, listen: false);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
