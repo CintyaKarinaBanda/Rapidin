@@ -3,11 +3,11 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class BleService {
-  final StreamController<BeaconSignal> _signalController = 
+  final StreamController<BeaconSignal> _signalController =
       StreamController<BeaconSignal>.broadcast();
-  
+
   Stream<BeaconSignal> get signalStream => _signalController.stream;
-  
+
   StreamSubscription<List<ScanResult>>? _scanSubscription;
   Timer? _restartTimer;
   bool _isScanning = false;
@@ -38,9 +38,10 @@ class BleService {
     if (!_isScanning) return;
 
     try {
-      print("Flutter: Iniciando escaneo continuo...");
+      // ignore: avoid_print
+      print('Flutter: Iniciando escaneo continuo...');
       await FlutterBluePlus.startScan();
-      
+
       _scanSubscription?.cancel();
       _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
         for (final result in results) {
@@ -52,14 +53,16 @@ class BleService {
               distance: _calculateDistance(result.rssi),
               timestamp: DateTime.now(),
             );
-            print("Flutter: RSSI: ${signal.rssi}, Distancia: ${signal.distance}m");
+            // ignore: avoid_print
+            print(
+                'Flutter: RSSI: ${signal.rssi}, Distancia: ${signal.distance}m',);
             _signalController.add(signal);
           }
         }
       });
-      
     } catch (e) {
-      print("Flutter: Error: $e");
+      // ignore: avoid_print
+      print('Flutter: Error: $e');
       if (_isScanning) {
         Timer(const Duration(seconds: 2), _startContinuousScanning);
       }
@@ -71,17 +74,17 @@ class BleService {
     if (rssi >= -35) return 0.08; // 8cm
     if (rssi >= -40) return 0.15; // 15cm
     if (rssi >= -45) return 0.25; // 25cm
-    if (rssi >= -50) return 0.4;  // 40cm
-    if (rssi >= -55) return 0.6;  // 60cm
-    if (rssi >= -60) return 0.9;  // 90cm
-    if (rssi >= -65) return 1.3;  // 1.3m
-    if (rssi >= -70) return 1.8;  // 1.8m
-    if (rssi >= -75) return 2.5;  // 2.5m
-    if (rssi >= -80) return 3.5;  // 3.5m
-    if (rssi >= -85) return 5.0;  // 5m
-    if (rssi >= -90) return 7.0;  // 7m
+    if (rssi >= -50) return 0.4; // 40cm
+    if (rssi >= -55) return 0.6; // 60cm
+    if (rssi >= -60) return 0.9; // 90cm
+    if (rssi >= -65) return 1.3; // 1.3m
+    if (rssi >= -70) return 1.8; // 1.8m
+    if (rssi >= -75) return 2.5; // 2.5m
+    if (rssi >= -80) return 3.5; // 3.5m
+    if (rssi >= -85) return 5.0; // 5m
+    if (rssi >= -90) return 7.0; // 7m
     if (rssi >= -95) return 10.0; // 10m
-    return 15.0;                  // >15m
+    return 15.0; // >15m
   }
 
   Future<void> stopScanning() async {

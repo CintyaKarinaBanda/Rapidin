@@ -12,7 +12,7 @@ class BleScreen extends StatefulWidget {
 class _BleScreenState extends State<BleScreen> {
   final BleService _bleService = BleService();
   StreamSubscription<BeaconSignal>? _signalSubscription;
-  
+
   BeaconSignal? _lastSignal;
   bool _isConnected = false;
 
@@ -26,7 +26,7 @@ class _BleScreenState extends State<BleScreen> {
     final initialized = await _bleService.initialize();
     if (initialized) {
       await _bleService.startScanning();
-      
+
       _signalSubscription = _bleService.signalStream.listen((signal) {
         setState(() {
           _lastSignal = signal;
@@ -79,7 +79,7 @@ class _BleScreenState extends State<BleScreen> {
     final distance = signal.distance;
     final rssi = signal.rssi;
     final time = signal.timestamp.toString().substring(11, 19);
-    
+
     return Card(
       elevation: 8,
       child: Padding(
@@ -90,7 +90,11 @@ class _BleScreenState extends State<BleScreen> {
             Icon(
               Icons.location_on,
               size: 64,
-              color: distance < 1.0 ? Colors.green : distance < 3.0 ? Colors.orange : Colors.red,
+              color: distance < 1.0
+                  ? Colors.green
+                  : distance < 3.0
+                      ? Colors.orange
+                      : Colors.red,
             ),
             const SizedBox(height: 16),
             Text(
@@ -108,11 +112,19 @@ class _BleScreenState extends State<BleScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              distance < 1.0 ? 'MUY CERCA' : distance < 3.0 ? 'CERCA' : 'LEJOS',
+              distance < 1.0
+                  ? 'MUY CERCA'
+                  : distance < 3.0
+                      ? 'CERCA'
+                      : 'LEJOS',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: distance < 1.0 ? Colors.green : distance < 3.0 ? Colors.orange : Colors.red,
+                color: distance < 1.0
+                    ? Colors.green
+                    : distance < 3.0
+                        ? Colors.orange
+                        : Colors.red,
               ),
             ),
           ],
