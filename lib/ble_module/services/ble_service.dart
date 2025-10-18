@@ -1,130 +1,112 @@
 import 'dart:async';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../models/ble_device_model.dart';
 
 class BleService {
-  static final BleService _instance = BleService._internal();
-  factory BleService() => _instance;
-  BleService._internal();
-
-  final StreamController<List<BleDeviceModel>> _devicesController = 
-      StreamController<List<BleDeviceModel>>.broadcast();
-  final StreamController<BleDeviceModel> _targetDeviceController = 
-      StreamController<BleDeviceModel>.broadcast();
-
-  Stream<List<BleDeviceModel>> get devicesStream => _devicesController.stream;
-  Stream<BleDeviceModel> get targetDeviceStream => _targetDeviceController.stream;
-
-  final List<BleDeviceModel> _discoveredDevices = [];
+  final StreamController<BeaconSignal> _signalController = 
+      StreamController<BeaconSignal>.broadcast();
+  
+  Stream<BeaconSignal> get signalStream => _signalController.stream;
+  
   StreamSubscription<List<ScanResult>>? _scanSubscription;
-  String? _targetDeviceId;
+  Timer? _restartTimer;
   bool _isScanning = false;
 
   Future<bool> initialize() async {
     try {
-      // Check BLE support
-      if (!await FlutterBluePlus.isSupported) {
-        throw Exception('BLE not supported on this device');
-      }
-
-      // Request permissions
+      if (!await FlutterBluePlus.isSupported) return false;
       await _requestPermissions();
-      
-      // Check if Bluetooth is on
-      final state = await FlutterBluePlus.adapterState.first;
-      if (state != BluetoothAdapterState.on) {
-        await FlutterBluePlus.turnOn();
-      }
-
       return true;
     } catch (e) {
-      print('BLE initialization error: $e');
       return false;
     }
   }
 
   Future<void> _requestPermissions() async {
-    final permissions = [
-      Permission.bluetooth,
-      Permission.bluetoothScan,
-      Permission.bluetoothConnect,
-      Permission.location,
-    ];
-
-    for (final permission in permissions) {
-      final status = await permission.request();
-      if (!status.isGranted) {
-        throw Exception('Permission ${permission.toString()} not granted');
-      }
-    }
+    await Permission.bluetooth.request();
+    await Permission.bluetoothScan.request();
+    await Permission.location.request();
   }
 
-  Future<void> startScanning({String? targetDeviceId}) async {
+  Future<void> startScanning() async {
     if (_isScanning) return;
-
-    _targetDeviceId = targetDeviceId;
     _isScanning = true;
-    _discoveredDevices.clear();
+    _startContinuousScanning();
+  }
+
+  void _startContinuousScanning() async {
+    if (!_isScanning) return;
 
     try {
-      await FlutterBluePlus.startScan(
-        timeout: const Duration(seconds: 10),
-        androidUsesFineLocation: true,
-      );
-
+      print("Flutter: Iniciando escaneo continuo...");
+      await FlutterBluePlus.startScan();
+      
+      _scanSubscription?.cancel();
       _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
-        _processScanResults(results);
+        for (final result in results) {
+          final name = result.device.platformName;
+          if (name == 'pedido_1') {
+            final signal = BeaconSignal(
+              name: name,
+              rssi: result.rssi,
+              distance: _calculateDistance(result.rssi),
+              timestamp: DateTime.now(),
+            );
+            print("Flutter: RSSI: ${signal.rssi}, Distancia: ${signal.distance}m");
+            _signalController.add(signal);
+          }
+        }
       });
-
+      
     } catch (e) {
-      print('Scan error: $e');
-      _isScanning = false;
+      print("Flutter: Error: $e");
+      if (_isScanning) {
+        Timer(const Duration(seconds: 2), _startContinuousScanning);
+      }
     }
   }
 
-  void _processScanResults(List<ScanResult> results) {
-    for (final result in results) {
-      final device = BleDeviceModel.fromScanResult(result);
-      
-      // Update or add device
-      final existingIndex = _discoveredDevices.indexWhere(
-        (d) => d.id == device.id
-      );
-      
-      if (existingIndex >= 0) {
-        _discoveredDevices[existingIndex] = device;
-      } else {
-        _discoveredDevices.add(device);
-      }
-
-      // Check if this is our target device
-      if (_targetDeviceId != null && 
-          (device.id.contains(_targetDeviceId!) || 
-           device.name.contains(_targetDeviceId!))) {
-        _targetDeviceController.add(device);
-      }
-    }
-
-    _devicesController.add(List.from(_discoveredDevices));
+  double _calculateDistance(int rssi) {
+    if (rssi >= -30) return 0.03; // Pegado al dispositivo
+    if (rssi >= -35) return 0.08; // 8cm
+    if (rssi >= -40) return 0.15; // 15cm
+    if (rssi >= -45) return 0.25; // 25cm
+    if (rssi >= -50) return 0.4;  // 40cm
+    if (rssi >= -55) return 0.6;  // 60cm
+    if (rssi >= -60) return 0.9;  // 90cm
+    if (rssi >= -65) return 1.3;  // 1.3m
+    if (rssi >= -70) return 1.8;  // 1.8m
+    if (rssi >= -75) return 2.5;  // 2.5m
+    if (rssi >= -80) return 3.5;  // 3.5m
+    if (rssi >= -85) return 5.0;  // 5m
+    if (rssi >= -90) return 7.0;  // 7m
+    if (rssi >= -95) return 10.0; // 10m
+    return 15.0;                  // >15m
   }
 
   Future<void> stopScanning() async {
-    if (!_isScanning) return;
-
+    _isScanning = false;
+    _restartTimer?.cancel();
     await FlutterBluePlus.stopScan();
     await _scanSubscription?.cancel();
-    _scanSubscription = null;
-    _isScanning = false;
   }
-
-  bool get isScanning => _isScanning;
-
-  List<BleDeviceModel> get discoveredDevices => List.from(_discoveredDevices);
 
   void dispose() {
     stopScanning();
-    _devicesController.close();
-    _targetDeviceController.close();
+    _signalController.close();
   }
+}
+
+class BeaconSignal {
+  final String name;
+  final int rssi;
+  final double distance;
+  final DateTime timestamp;
+
+  BeaconSignal({
+    required this.name,
+    required this.rssi,
+    required this.distance,
+    required this.timestamp,
+  });
 }

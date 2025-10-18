@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'auth_manager.dart';
-import 'ble_module/screens/ble_monitor_screen.dart';
+import 'ble_module/screens/ble_screen.dart';
 import 'screens/product_detail_screen.dart';
 import 'screens/cart_screen.dart';
 import 'providers/cart_provider.dart';
@@ -66,7 +66,7 @@ class HomeView extends StatelessWidget {
             icon: const Icon(Icons.bluetooth),
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const BleMonitorScreen()),
+              MaterialPageRoute(builder: (context) => const BleScreen()),
             ),
             tooltip: 'BLE Monitor',
           ),
@@ -117,36 +117,6 @@ class HomeView extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.orange.shade400, Colors.orange.shade600],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '¡Bienvenido!',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  'Elige tus platillos favoritos',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
           // Menu Grid
           Expanded(
             child: Padding(
