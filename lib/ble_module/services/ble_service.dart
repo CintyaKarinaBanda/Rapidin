@@ -38,7 +38,8 @@ class BleService {
     if (!_isScanning) return;
 
     try {
-      print("Flutter: Iniciando escaneo continuo...");
+      // ignore: avoid_print
+      print('Flutter: Iniciando escaneo continuo...');
       await FlutterBluePlus.startScan();
 
       _scanSubscription?.cancel();
@@ -52,14 +53,16 @@ class BleService {
               distance: _calculateDistance(result.rssi),
               timestamp: DateTime.now(),
             );
+            // ignore: avoid_print
             print(
-                "Flutter: RSSI: ${signal.rssi}, Distancia: ${signal.distance}m");
+                'Flutter: RSSI: ${signal.rssi}, Distancia: ${signal.distance}m',);
             _signalController.add(signal);
           }
         }
       });
     } catch (e) {
-      print("Flutter: Error: $e");
+      // ignore: avoid_print
+      print('Flutter: Error: $e');
       if (_isScanning) {
         Timer(const Duration(seconds: 2), _startContinuousScanning);
       }

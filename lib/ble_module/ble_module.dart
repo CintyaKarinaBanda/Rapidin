@@ -1,5 +1,7 @@
 // BLE Module - Simple BLE signal receiver
 
+import 'services/ble_service.dart';
+
 export 'services/ble_service.dart';
 export 'screens/ble_screen.dart';
 
