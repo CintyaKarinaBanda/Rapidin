@@ -35,7 +35,7 @@ dependencies:
   firebase_auth: ^5.0.0
   
   # BLE Module Dependencies
-  flutter_blue_plus: ^1.32.12
+  flutter_blue_plus: ^2.0.0
   permission_handler: ^11.3.1
   mqtt_client: ^10.2.0
 
