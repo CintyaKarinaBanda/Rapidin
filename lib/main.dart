@@ -5,7 +5,10 @@ import 'firebase_options.dart'; // Generated file
 import 'login_view.dart';
 import 'auth_manager.dart';
 import 'home_view.dart';
+import 'admin_home_view.dart';
 import 'providers/cart_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 void main() async {
   // Ensure Flutter is initialized before Firebase
@@ -45,14 +48,41 @@ class MyApp extends StatelessWidget {
               );
             }
 
-            // If user is logged in, go to home
-            if (snapshot.hasData) {
-              final user = AuthManager().currentUser;
-              return HomeView(email: user?.email ?? '');
+            // If not logged in, show login screen
+            if (!snapshot.hasData) {
+              return const LoginView();
             }
 
-            // Otherwise show login
-            return const LoginView();
+            // User is logged in → check Firestore for their role
+            final user = AuthManager().currentUser;
+
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+              .collection('users')
+              .doc(user!.uid)
+              .get(),
+              builder: (context, userSnapshot) {
+                if (userSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                  return const Scaffold(
+                    body: Center(child: Text('User record not found in Firestore')),
+                  );
+                }
+
+                final role = userSnapshot.data!['role'] ?? 'user';
+
+            if (role == 'admin') {
+              return AdminHomeView(email: user.email ?? '');
+            } else {
+              return HomeView(email: user.email ?? '');
+            }
+              },
+            );
           },
         ),
         debugShowCheckedModeBanner: false,

@@ -30,13 +30,35 @@ class AuthService {
   }
 
   // Sign in with email & password
-  Future<User?> signInWithEmail(String email, String password) async {
+  Future<Map<String, dynamic>> signInWithEmail(String email, String password) async {
     try {
+      // Step 1: Authenticate user
       UserCredential result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      return result.user;
+
+      final user = result.user;
+      if (user == null) throw Exception('Failed to retrieve user');
+
+      // Step 2: Look up Firestore user document
+      DocumentSnapshot userDoc =
+      await _firestore.collection('users').doc(user.uid).get();
+
+      if (!userDoc.exists) {
+        throw Exception('User record not found in Firestorez :p');
+      }
+
+      // Step 3: Extract role (or privilege field)
+      final data = userDoc.data() as Map<String, dynamic>;
+      final role = data['role'] ?? 'user';
+
+      // Step 4: Return both user and role
+      return {
+        'user': user,
+        'role': role,
+      };
+
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
         throw Exception('No user found with that email');

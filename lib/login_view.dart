@@ -150,7 +150,7 @@ class _LoginViewState extends State<LoginView> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Sign in to continue',
+                    'Sign in to continuee',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey,
