@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'auth_manager.dart';
-import 'ble_module/screens/ble_monitor_screen.dart';
+import 'providers/auth_provider.dart';
+import 'ble_module/screens/distance_screen.dart';
 import 'screens/product_detail_screen.dart';
 import 'screens/cart_screen.dart';
 import 'providers/cart_provider.dart';
@@ -12,7 +12,7 @@ class HomeView extends StatelessWidget {
   const HomeView({Key? key, required this.email}) : super(key: key);
 
   void _handleLogout(BuildContext context) async {
-    await AuthManager().signOut();
+    await Provider.of<AuthProvider>(context, listen: false).signOut();
   }
 
   final List<Map<String, dynamic>> _menuItems = const [
@@ -66,7 +66,7 @@ class HomeView extends StatelessWidget {
             icon: const Icon(Icons.bluetooth),
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const BleMonitorScreen()),
+              MaterialPageRoute(builder: (context) => const DistanceScreen()),
             ),
             tooltip: 'BLE Monitor',
           ),
@@ -116,37 +116,7 @@ class HomeView extends StatelessWidget {
         ],
       ),
       body: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.orange.shade400, Colors.orange.shade600],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '¡Bienvenido!',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  'Elige tus platillos favoritos',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
+        children: [          
           // Menu Grid
           Expanded(
             child: Padding(
@@ -211,13 +181,15 @@ class HomeView extends StatelessWidget {
               const SizedBox(height: 4),
               
               // Description
-              Text(
-                item['description'],
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
+              Expanded(
+                child: Text(
+                  item['description'],
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey[600],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
               const Spacer(),
               

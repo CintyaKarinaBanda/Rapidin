@@ -1,44 +1,24 @@
 // BLE Module - Main export file
-// This module provides BLE scanning, distance measurement, and AWS IoT integration
+// This module provides BLE scanning and distance measurement
 
 export 'models/ble_device_model.dart';
 export 'services/ble_service.dart';
-export 'services/aws_iot_service.dart';
 export 'services/proximity_manager.dart';
-export 'screens/ble_monitor_screen.dart';
+export 'screens/distance_screen.dart';
 
 // Main BLE Module class for easy integration
 class BleModule {
   static const String version = '1.0.0';
-  static const String description = 'BLE proximity monitoring with AWS IoT integration';
+  static const String description = 'BLE proximity monitoring for distance measurement';
   
   // Quick access to main services
   static final proximityManager = ProximityManager();
-  static final awsIotService = AwsIotService();
   static final bleService = BleService();
   
   // Initialize the entire module
-  static Future<bool> initialize({
-    String? awsEndpoint,
-    String? clientId,
-  }) async {
+  static Future<bool> initialize() async {
     try {
-      // Initialize BLE service
-      final bleInitialized = await bleService.initialize();
-      if (!bleInitialized) return false;
-      
-      // Initialize AWS IoT if credentials provided
-      if (awsEndpoint != null) {
-        final awsInitialized = await awsIotService.initialize(
-          endpoint: awsEndpoint,
-          clientId: clientId ?? 'rapidin-mobile-${DateTime.now().millisecondsSinceEpoch}',
-        );
-        if (!awsInitialized) {
-          print('Warning: AWS IoT initialization failed, continuing with BLE only');
-        }
-      }
-      
-      return true;
+      return await bleService.initialize();
     } catch (e) {
       print('BLE Module initialization error: $e');
       return false;
@@ -46,8 +26,8 @@ class BleModule {
   }
   
   // Quick start monitoring
-  static Future<void> startMonitoring(String targetDeviceId) async {
-    await proximityManager.startMonitoring(targetDeviceId: targetDeviceId);
+  static Future<void> startMonitoring({String? targetDevice}) async {
+    await proximityManager.startMonitoring(targetDevice: targetDevice ?? 'pedido_1');
   }
   
   // Stop monitoring
@@ -58,7 +38,6 @@ class BleModule {
   // Cleanup resources
   static void dispose() {
     proximityManager.stopMonitoring();
-    awsIotService.disconnect();
     bleService.dispose();
   }
 }

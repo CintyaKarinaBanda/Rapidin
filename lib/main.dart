@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart'; // Generated file
-import 'login_view.dart';
-import 'auth_manager.dart';
+import 'screens/login_screen.dart';
 import 'home_view.dart';
 import 'admin_home_view.dart';
 import 'providers/cart_provider.dart';
+import 'providers/auth_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 
@@ -27,40 +27,30 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => CartProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => CartProvider()),
+        ChangeNotifierProvider(create: (context) => AuthProvider()),
+      ],
       child: MaterialApp(
         title: 'Rapidin - Gestión de Pedidos',
         theme: ThemeData(
           primarySwatch: Colors.orange,
           useMaterial3: true,
         ),
-        // Check if user is already logged in
-        home: StreamBuilder(
-          stream: AuthManager().authStateChanges,
-          builder: (context, snapshot) {
-            // Show loading while checking auth state
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(),
-                ),
-              );
+        home: Consumer<AuthProvider>(
+          builder: (context, authProvider, child) {
+            // If not authenticated, show login screen
+            if (!authProvider.isAuthenticated) {
+              return const LoginScreen();
             }
 
-            // If not logged in, show login screen
-            if (!snapshot.hasData) {
-              return const LoginView();
-            }
-
-            // User is logged in → check Firestore for their role
-            final user = AuthManager().currentUser;
-
+            // User is authenticated, check role in Firestore
             return FutureBuilder<DocumentSnapshot>(
               future: FirebaseFirestore.instance
-              .collection('users')
-              .doc(user!.uid)
-              .get(),
+                  .collection('users')
+                  .doc(authProvider.user!.uid)
+                  .get(),
               builder: (context, userSnapshot) {
                 if (userSnapshot.connectionState == ConnectionState.waiting) {
                   return const Scaffold(
@@ -69,18 +59,30 @@ class MyApp extends StatelessWidget {
                 }
 
                 if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-                  return const Scaffold(
-                    body: Center(child: Text('User record not found in Firestore')),
-                  );
+                  // User not found in Firestore, create default user document
+                  FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(authProvider.user!.uid)
+                      .set({
+                    'email': authProvider.user!.email,
+                    'role': 'user',
+                    'createdAt': FieldValue.serverTimestamp(),
+                  });
+                  return HomeView(email: authProvider.user!.email);
+                }
+
+                if (userSnapshot.hasError) {
+                  // Error accessing Firestore, default to user role
+                  return HomeView(email: authProvider.user!.email);
                 }
 
                 final role = userSnapshot.data!['role'] ?? 'user';
 
-            if (role == 'admin') {
-              return AdminHomeView(email: user.email ?? '');
-            } else {
-              return HomeView(email: user.email ?? '');
-            }
+                if (role == 'admin') {
+                  return AdminHomeView(email: authProvider.user!.email);
+                } else {
+                  return HomeView(email: authProvider.user!.email);
+                }
               },
             );
           },

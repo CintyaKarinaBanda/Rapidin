@@ -69,7 +69,6 @@ class BleService {
 
     try {
       await FlutterBluePlus.startScan(
-        timeout: const Duration(seconds: 10),
         androidUsesFineLocation: true,
       );
 
@@ -98,11 +97,17 @@ class BleService {
         _discoveredDevices.add(device);
       }
 
-      // Check if this is our target device
-      if (_targetDeviceId != null && 
-          (device.id.contains(_targetDeviceId!) || 
-           device.name.contains(_targetDeviceId!))) {
-        _targetDeviceController.add(device);
+      // Check if this is our target device - EMIT EVERY TIME
+      if (_targetDeviceId != null) {
+        // Log all devices for debugging
+        print('BLE Device found: ${device.name} (${device.id}) - RSSI: ${device.rssi}');
+        
+        if (device.id.contains(_targetDeviceId!) || 
+            device.name.contains(_targetDeviceId!)) {
+          // Always emit, even if it's the same device
+          _targetDeviceController.add(device);
+          print('Target device emitted: ${device.name} - Distance: ${device.estimatedDistance}m');
+        }
       }
     }
 
