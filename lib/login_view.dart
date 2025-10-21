@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'auth_manager.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({Key? key}) : super(key: key);
@@ -13,7 +14,6 @@ class _LoginViewState extends State<LoginView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authManager = AuthManager();
-
   bool _isLoading = false;
   bool _obscurePassword = true;
 
@@ -34,7 +34,6 @@ class _LoginViewState extends State<LoginView> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-
       // Navigation is handled automatically by StreamBuilder in main.dart
     } catch (e) {
       if (mounted) {
@@ -51,7 +50,6 @@ class _LoginViewState extends State<LoginView> {
       }
     }
   }
-
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -64,14 +62,7 @@ class _LoginViewState extends State<LoginView> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Account created successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // Navigation is handled automatically by StreamBuilder in main.dart
+        _showSuccessDialog();
       }
     } catch (e) {
       if (mounted) {
@@ -88,37 +79,68 @@ class _LoginViewState extends State<LoginView> {
       }
     }
   }
+  void _resetPassword(){
 
-  Future<void> _resetPassword() async {
-    final email = _emailController.text.trim();
+  }
 
-    if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your email')),
-      );
-      return;
-    }
-
-    try {
-      await _authManager.sendPasswordResetEmail(email);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password reset email sent!'),
-            backgroundColor: Colors.green,
+  void _privacyAgreement() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Privacy Agreement'),
+          content: const Text(
+            'Please read our Privacy Policy and Terms of Service before creating an account.',
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final url = Uri.parse('https://docs.google.com/document/d/1UGaz8tFl_V2hPeijvcz4pDf_THkHheMvWBURyqX3tVs/edit?tab=t.0#heading=h.pi87y0g6uvaj');
+                if (await canLaunchUrl(url)) {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                } else {
+                  // Show error if URL can't be opened
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Could not open PDF')),
+                  );
+                }
+                Navigator.of(context).pop();
+              },
+              child: const Text('Read PDF'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Continue with sign up
+              },
+              child: const Text('I Agree'),
+            ),
+          ],
         );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red,
-          ),
+      },
+    );
+  }
+  // ADD THIS METHOD - Dialog for account creation
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Success'),
+          content: const Text('Account created successfully!'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
         );
-      }
-    }
+      },
+    );
   }
 
   @override
@@ -239,7 +261,10 @@ class _LoginViewState extends State<LoginView> {
                   ),
                   const SizedBox(height: 16),
                   OutlinedButton(
-                    onPressed: _isLoading ? null : _signUp,
+                    onPressed: _isLoading ? null : () async {
+                      _privacyAgreement();
+                      //await _signUp();
+                    },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.all(16),
                       shape: RoundedRectangleBorder(
