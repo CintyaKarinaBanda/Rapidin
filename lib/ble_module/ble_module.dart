@@ -5,6 +5,8 @@ export 'models/ble_device_model.dart';
 export 'services/ble_service.dart';
 export 'services/proximity_manager.dart';
 export 'screens/distance_screen.dart';
+export 'screens/ble_monitor_screen.dart';
+export 'services/aws_iot_service.dart';
 
 // Main BLE Module class for easy integration
 class BleModule {
@@ -14,6 +16,7 @@ class BleModule {
   // Quick access to main services
   static final proximityManager = ProximityManager();
   static final bleService = BleService();
+  static final awsIotService = AwsIotService();
   
   // Initialize the entire module
   static Future<bool> initialize() async {
@@ -37,7 +40,8 @@ class BleModule {
   
   // Cleanup resources
   static void dispose() {
-    proximityManager.stopMonitoring();
+    proximityManager.dispose();
     bleService.dispose();
+    awsIotService.disconnect();
   }
 }

@@ -22,7 +22,8 @@ class _BleMonitorScreenState extends State<BleMonitorScreen> {
   bool _isMonitoring = false;
   bool _isAwsConnected = false;
   List<BleDeviceModel> _nearbyDevices = [];
-  Timer? _updateTimer;
+  StreamSubscription<List<BleDeviceModel>>? _devicesSubscription;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -30,20 +31,25 @@ class _BleMonitorScreenState extends State<BleMonitorScreen> {
     _targetDeviceController.text = 'pedido_1';
     _clientIdController.text = 'rapidin-mobile-${DateTime.now().millisecondsSinceEpoch}';
     
-    _updateTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-      if (_isMonitoring) {
+    // ✅ SUSCRIBIRSE AL STREAM EN TIEMPO REAL
+    _devicesSubscription = _proximityManager.devicesStream.listen((devices) {
+      if (mounted && _isMonitoring) {
         setState(() {
-          _nearbyDevices = _proximityManager.nearbyDevices;
+          _nearbyDevices = devices;
         });
+        print('[BleMonitor] Updated ${devices.length} devices');
       }
     });
   }
 
   @override
   void dispose() {
-    _updateTimer?.cancel();
+    _devicesSubscription?.cancel();
     _proximityManager.stopMonitoring();
     _awsIotService.disconnect();
+    _targetDeviceController.dispose();
+    _endpointController.dispose();
+    _clientIdController.dispose();
     super.dispose();
   }
 
@@ -100,6 +106,36 @@ class _BleMonitorScreenState extends State<BleMonitorScreen> {
     _showSnackBar('BLE monitoring stopped', Colors.orange);
   }
 
+  Future<void> _refreshDevices() async {
+    if (_isRefreshing || !_isMonitoring) return;
+    
+    setState(() {
+      _isRefreshing = true;
+    });
+    
+    _showSnackBar('Actualizando dispositivos...', Colors.blue);
+    
+    try {
+      // Reiniciar el monitoreo para obtener lecturas frescas
+      await _proximityManager.stopMonitoring();
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      await _proximityManager.startMonitoring(
+        targetDeviceId: _targetDeviceController.text,
+        threshold: 2.0,
+        interval: const Duration(seconds: 5),
+      );
+      
+      _showSnackBar('Dispositivos actualizados', Colors.green);
+    } catch (e) {
+      _showSnackBar('Error al actualizar: $e', Colors.red);
+    } finally {
+      setState(() {
+        _isRefreshing = false;
+      });
+    }
+  }
+
   void _showSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -117,6 +153,23 @@ class _BleMonitorScreenState extends State<BleMonitorScreen> {
         title: const Text('BLE Monitor'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        actions: [
+          if (_isMonitoring)
+            IconButton(
+              onPressed: _isRefreshing ? null : _refreshDevices,
+              icon: _isRefreshing 
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.refresh),
+              tooltip: 'Actualizar dispositivos',
+            ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -294,6 +347,7 @@ class _BleMonitorScreenState extends State<BleMonitorScreen> {
 
   Widget _buildDeviceCard(BleDeviceModel device) {
     final isClose = device.estimatedDistance <= 1.0;
+    final signalStrength = _getSignalStrength(device.rssi);
     
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -307,7 +361,8 @@ class _BleMonitorScreenState extends State<BleMonitorScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Distance: ${device.estimatedDistance.toStringAsFixed(2)}m'),
-            Text('RSSI: ${device.rssi} dBm'),
+            Text('RSSI: ${device.rssi} dBm ($signalStrength)'),
+            Text('Last seen: ${_formatTime(device.lastSeen)}'),
           ],
         ),
         trailing: Container(
@@ -327,5 +382,19 @@ class _BleMonitorScreenState extends State<BleMonitorScreen> {
         ),
       ),
     );
+  }
+
+  String _getSignalStrength(int rssi) {
+    if (rssi >= -50) return 'Excellent';
+    if (rssi >= -60) return 'Good';
+    if (rssi >= -70) return 'Fair';
+    return 'Poor';
+  }
+
+  String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    final diff = now.difference(time).inSeconds;
+    if (diff < 5) return 'Now';
+    return '${diff}s ago';
   }
 }

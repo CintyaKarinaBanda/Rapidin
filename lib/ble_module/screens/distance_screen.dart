@@ -17,6 +17,7 @@ class _DistanceScreenState extends State<DistanceScreen> {
   BleDeviceModel? _targetDevice;
   bool _isScanning = false;
   String _status = 'Inicializando...';
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -25,39 +26,83 @@ class _DistanceScreenState extends State<DistanceScreen> {
   }
 
   Future<void> _startContinuousMonitoring() async {
+    print('[DistanceScreen] Starting continuous monitoring...');
+    
     setState(() {
       _status = 'Inicializando BLE...';
     });
 
+    print('[DistanceScreen] Initializing BLE service...');
     final initialized = await _bleService.initialize();
     if (!initialized) {
+      print('[DistanceScreen] BLE initialization failed');
       setState(() {
         _status = 'Error: BLE no disponible';
       });
       return;
     }
+    print('[DistanceScreen] BLE initialized successfully');
 
     setState(() {
       _status = 'Buscando pedido_1...';
       _isScanning = true;
     });
 
+    print('[DistanceScreen] Starting scan for pedido_1...');
     await _bleService.startScanning(targetDeviceId: 'pedido_1');
     
+    print('[DistanceScreen] Setting up device stream listener...');
     _deviceSubscription = _bleService.targetDeviceStream.listen(
       (device) {
-        print('DistanceScreen: Received device update - ${device.name} at ${device.estimatedDistance}m');
+        print('[DistanceScreen] ✅ Received device update - ${device.name} at ${device.estimatedDistance.toStringAsFixed(2)}m');
         setState(() {
           _targetDevice = device;
           _status = 'Conectado - Actualizando...';
         });
       },
       onError: (e) {
+        print('[DistanceScreen] ❌ Stream error: $e');
         setState(() {
           _status = 'Error: $e';
         });
       },
     );
+    print('[DistanceScreen] Stream listener set up, waiting for devices...');
+  }
+
+  Future<void> _refreshDistance() async {
+    if (_isRefreshing) return;
+    
+    setState(() {
+      _isRefreshing = true;
+      _status = 'Actualizando distancia...';
+    });
+    
+    print('[DistanceScreen] 🔄 Manual refresh requested');
+    
+    try {
+      // Reiniciar el escaneo para obtener lectura fresca
+      await _bleService.stopScanning();
+      await Future.delayed(const Duration(milliseconds: 500));
+      await _bleService.startScanning(targetDeviceId: 'pedido_1');
+      
+      // Esperar un momento para nueva lectura
+      await Future.delayed(const Duration(seconds: 2));
+      
+      print('[DistanceScreen] ✅ Manual refresh completed');
+    } catch (e) {
+      print('[DistanceScreen] ❌ Refresh error: $e');
+      setState(() {
+        _status = 'Error al actualizar: $e';
+      });
+    } finally {
+      setState(() {
+        _isRefreshing = false;
+        if (_targetDevice != null) {
+          _status = 'Conectado - Actualizando...';
+        }
+      });
+    }
   }
 
   @override
@@ -74,6 +119,23 @@ class _DistanceScreenState extends State<DistanceScreen> {
         title: const Text('Distancia del Pedido'),
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
+        actions: [
+          if (_targetDevice != null)
+            IconButton(
+              onPressed: _isRefreshing ? null : _refreshDistance,
+              icon: _isRefreshing 
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.refresh),
+              tooltip: 'Actualizar distancia',
+            ),
+        ],
       ),
       body: Center(
         child: Padding(
@@ -202,6 +264,35 @@ class _DistanceScreenState extends State<DistanceScreen> {
                   ],
                 ),
               ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        
+        // Botón de actualizar manual
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _isRefreshing ? null : _refreshDistance,
+            icon: _isRefreshing 
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.refresh),
+            label: Text(_isRefreshing ? 'Actualizando...' : 'Actualizar Distancia'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),
