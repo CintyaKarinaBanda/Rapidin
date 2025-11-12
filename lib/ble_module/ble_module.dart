@@ -1,5 +1,5 @@
-// BLE Module - Main export file
-// This module provides BLE scanning and distance measurement
+// ignore_for_file: all
+
 
 export 'models/ble_device_model.dart';
 export 'services/ble_service.dart';

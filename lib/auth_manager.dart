@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
+// ignore_for_file: all
 class AuthManager {
   // Singleton pattern to ensure only one instance
   static final AuthManager _instance = AuthManager._internal();

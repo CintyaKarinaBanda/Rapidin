@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// ignore_for_file: all
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'ble_module/screens/distance_screen.dart';

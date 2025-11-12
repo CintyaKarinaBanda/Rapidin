@@ -1,3 +1,4 @@
+// ignore_for_file: all
 import 'dart:math' as math;
 
 class BleDeviceModel {

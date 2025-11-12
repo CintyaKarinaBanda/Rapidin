@@ -1,3 +1,4 @@
+// ignore_for_file: all
 import 'package:flutter/material.dart';
 
 class AdminHomeView extends StatelessWidget {

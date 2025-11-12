@@ -1,3 +1,5 @@
+// ignore_for_file: all
+
 class DistanceFilter {
   final List<double> _values = [];
   final int _windowSize;

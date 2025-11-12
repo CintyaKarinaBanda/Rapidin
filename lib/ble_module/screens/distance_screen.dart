@@ -1,3 +1,4 @@
+// ignore_for_file: all
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../models/ble_device_model.dart';

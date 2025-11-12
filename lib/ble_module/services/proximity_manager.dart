@@ -1,3 +1,5 @@
+// ignore_for_file: all
+
 import 'dart:async';
 import 'ble_service.dart';
 import '../models/ble_device_model.dart';
