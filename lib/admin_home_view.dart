@@ -1,7 +1,8 @@
 // ignore_for_file: all
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
+
+import 'ad_dishes.dart';
+import 'ad_orders.dart';
 
 class AdminHomeView extends StatelessWidget {
   final String email;
@@ -15,77 +16,66 @@ class AdminHomeView extends StatelessWidget {
         title: const Text('Admin Dashboard'),
         backgroundColor: Colors.orange,
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        // Listen to the "orders" collection, ordered by creation date (latest first)
-        stream: FirebaseFirestore.instance
-        .collection('orders')
-        .orderBy('createdAt', descending: true)
-        .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error loading orders: ${snapshot.error}',
-                style: const TextStyle(color: Colors.red),
-              ),
-            );
-          }
-
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
-              child: Text('No orders found.'),
-            );
-          }
-
-          final orders = snapshot.data!.docs;
-
-          return ListView.builder(
-            itemCount: orders.length,
-            itemBuilder: (context, index) {
-              final order = orders[index];
-              final data = order.data() as Map<String, dynamic>;
-
-              final customerEmail = data['customerEmail'] ?? 'Unknown';
-          final total = data['total'] ?? 0.0;
-          final status = data['status'] ?? 'unknown';
-          final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
-
-          final formattedDate = createdAt != null
-          ? DateFormat('yyyy-MM-dd HH:mm').format(createdAt)
-          : 'No date';
-
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            elevation: 2,
-            child: ListTile(
-              title: Text('Order from $customerEmail'),
-              subtitle: Text('Status: $status\nDate: $formattedDate'),
-              trailing: Text('\$${total.toStringAsFixed(2)}'),
-              onTap: () {
-                // Optionally show more order details in a dialog
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Order details'),
-                    content: Text(data.toString()),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Close'),
-                      ),
-                    ],
+              // ---- DISHES BUTTON ----
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    textStyle: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                );
-              },
-            ),
-          );
-            },
-          );
-        },
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AdDishesView(),
+                      ),
+                    );
+                  },
+                  child: const Text("Dishes"),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // ---- ORDERS BUTTON ----
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    textStyle: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AdOrdersView(),
+                      ),
+                    );
+                  },
+                  child: const Text("Orders"),
+                ),
+              ),
+
+            ],
+          ),
+        ),
       ),
     );
   }

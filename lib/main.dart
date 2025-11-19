@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart'; // Generated file
 import 'screens/login_screen.dart';
 import 'home_view.dart';
+import 'cook_view.dart';
 import 'admin_home_view.dart';
 import 'providers/cart_provider.dart';
 import 'providers/auth_provider.dart';
@@ -81,7 +82,11 @@ class MyApp extends StatelessWidget {
 
                 if (role == 'admin') {
                   return AdminHomeView(email: authProvider.user!.email);
-                } else {
+                }
+                else if (role == 'cook') {
+                  return CookView(email: authProvider.user!.email);
+                }
+                else {
                   return HomeView(email: authProvider.user!.email);
                 }
               },
