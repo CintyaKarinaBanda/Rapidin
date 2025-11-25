@@ -1,14 +1,300 @@
 // ignore_for_file: all
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'order_status_screen.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
-class CartScreen extends StatelessWidget {
+class CartScreen extends StatefulWidget {
   const CartScreen({Key? key}) : super(key: key);
 
+  @override
+  State<CartScreen> createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> {
+  Timer? _statusChecker;
+  String? _lastKnownStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeNotifications();
+    _startStatusPolling();
+  }
+
+  // ======================================================
+  // INITIALIZE NOTIFICATIONS (token saving + listeners)
+  // ======================================================
+  Future<void> _initializeNotifications() async {
+    try {
+      // Request permission (CRITICAL for iOS and Android 13+)
+      NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        // Save token and listen for changes
+        await _saveUserFCMToken();
+        _listenForTokenRefresh();
+        _listenForNotifications();
+        _setupInteractedMessage();
+      } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+        await _saveUserFCMToken();
+        _listenForTokenRefresh();
+        _listenForNotifications();
+      } else {
+        // User declined or has not accepted permission
+        // still start polling (notifications will be local)
+      }
+    } catch (e) {
+      print("Notification init error: $e");
+    }
+  }
+
+  // ======================================================
+  // SAVE USER'S FCM TOKEN
+  // ======================================================
+  Future<void> _saveUserFCMToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print('No user logged in (FCM token not saved)');
+      return;
+    }
+
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null) {
+        print('FCM token is null');
+        return;
+      }
+
+      print('FCM Token: $token');
+
+      await FirebaseFirestore.instance
+      .collection("users")
+      .doc(user.uid)
+      .set({
+        "fcmToken": token,
+        "tokenUpdatedAt": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      print('Token saved successfully to Firestore');
+    } catch (e) {
+      print('Error saving FCM token: $e');
+    }
+  }
+
+  // ======================================================
+  // LISTEN FOR TOKEN REFRESH
+  // ======================================================
+  void _listenForTokenRefresh() {
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      print('FCM Token refreshed: $newToken');
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      try {
+        await FirebaseFirestore.instance
+        .collection("users")
+        .doc(user.uid)
+        .set({
+          "fcmToken": newToken,
+          "tokenUpdatedAt": FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        print('Refreshed token saved successfully');
+      } catch (e) {
+        print('Error saving refreshed token: $e');
+      }
+    });
+  }
+
+  // ======================================================
+  // LISTEN FOR FOREGROUND PUSH NOTIFICATIONS (FCM)
+  // ======================================================
+  void _listenForNotifications() {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('Foreground notification received');
+      print('Title: ${message.notification?.title}');
+      print('Body: ${message.notification?.body}');
+      print('Data: ${message.data}');
+
+      if (!mounted) return;
+
+      final notif = message.notification;
+      if (notif == null) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "${notif.title ?? 'Notificación'}\n${notif.body ?? ''}",
+            style: const TextStyle(color: Colors.white),
+          ),
+          duration: const Duration(seconds: 4),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'Ver',
+            textColor: Colors.white,
+            onPressed: () {
+              _handleNotificationTap(message);
+            },
+          ),
+        ),
+      );
+    });
+  }
+
+  // ======================================================
+  // SETUP NOTIFICATION TAP HANDLER (BACKGROUND/TERMINATED)
+  // ======================================================
+  Future<void> _setupInteractedMessage() async {
+    // Handle notification tap when app was terminated
+    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      print('App opened from terminated state by notification');
+      _handleNotificationTap(initialMessage);
+    }
+
+    // Handle notification tap when app is in background
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('App opened from background by notification');
+      _handleNotificationTap(message);
+    });
+  }
+
+  // ======================================================
+  // HANDLE NOTIFICATION TAP
+  // ======================================================
+  void _handleNotificationTap(RemoteMessage message) {
+    print('Notification tapped: ${message.data}');
+
+    // Navigate based on notification data
+    if (message.data['type'] == 'order_update') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const OrderStatusScreen(),
+        ),
+      );
+    }
+  }
+
+  // ======================================================
+  // POLLING: check the most recent order every 3 seconds
+  // ======================================================
+  void _startStatusPolling() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print("No user logged in — polling not started");
+      return;
+    }
+
+    // Immediately run once to initialize last status
+    _checkLatestOrderStatusOnce();
+
+    // Start periodic polling every 3 seconds
+    _statusChecker = Timer.periodic(const Duration(seconds: 3), (timer) {
+      _checkLatestOrderStatusOnce();
+    });
+  }
+
+  Future<void> _checkLatestOrderStatusOnce() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final snap = await FirebaseFirestore.instance
+      .collection("orders")
+      .where("clientID", isEqualTo: user.uid)
+      .orderBy("createdAt", descending: true)
+      .limit(1)
+      .get();
+
+      if (snap.docs.isEmpty) {
+        // No orders yet — reset last known status
+        if (_lastKnownStatus != null) {
+          _lastKnownStatus = null;
+        }
+        return;
+      }
+
+      final doc = snap.docs.first;
+      final data = doc.data();
+
+      // Safely read status as String?
+      final dynamic statusField = data['status'];
+      final String status = statusField == null ? 'unknown' : statusField.toString();
+
+      // First poll: initialize
+      if (_lastKnownStatus == null) {
+        _lastKnownStatus = status;
+        print("Initialized lastKnownStatus = $_lastKnownStatus");
+        return;
+      }
+
+      // Compare
+      if (status != _lastKnownStatus) {
+        print("STATUS CHANGED: $_lastKnownStatus -> $status");
+        final previous = _lastKnownStatus;
+        _lastKnownStatus = status;
+
+        // Show local in-app notification (SnackBar)
+        _showLocalNotification(
+          title: "Actualización de tu pedido",
+          body: "Estado: $status",
+        );
+
+        // Optionally navigate to order screen when user taps the action.
+        // (We already show a 'Ver' action in the SnackBar)
+        // If you also want to send a remote push, keep Cloud Function active.
+      }
+    } catch (e) {
+      print("Error checking latest order status: $e");
+    }
+  }
+
+  // ======================================================
+  // SHOW LOCAL IN-APP NOTIFICATION (SnackBar)
+  // ======================================================
+  void _showLocalNotification({required String title, required String body}) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("$title\n$body"),
+        duration: const Duration(seconds: 4),
+        backgroundColor: Colors.orange,
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'Ver',
+          textColor: Colors.white,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const OrderStatusScreen(),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // ======================================================
+  // UI
+  // ======================================================
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -87,23 +373,6 @@ class CartScreen extends StatelessWidget {
                               padding: const EdgeInsets.all(12),
                               child: Row(
                                 children: [
-                                  // Product Image
-                                  Container(
-                                    width: 60,
-                                    height: 60,
-                                    decoration: BoxDecoration(
-                                      color: Colors.orange.shade50,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        item.image,
-                                        style: const TextStyle(fontSize: 24),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-
                                   // Product Info
                                   Expanded(
                                     child: Column(
@@ -172,7 +441,8 @@ class CartScreen extends StatelessWidget {
                                         ],
                                       ),
                                       TextButton(
-                                        onPressed: () => cart.removeItem(item.name),
+                                        onPressed: () =>
+                                        cart.removeItem(item.name),
                                         child: const Text(
                                           'Eliminar',
                                           style: TextStyle(color: Colors.red, fontSize: 12),
@@ -266,10 +536,9 @@ class CartScreen extends StatelessWidget {
               .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const SizedBox(); // No pending order
+                  return const SizedBox();
                 }
 
-                // Pending order exists → show button
                 return Container(
                   width: double.infinity,
                   color: Colors.white,
@@ -293,7 +562,8 @@ class CartScreen extends StatelessWidget {
                     },
                     child: const Text(
                       "Ver mi pedido pendiente",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                 );
@@ -305,7 +575,7 @@ class CartScreen extends StatelessWidget {
   }
 
   // ======================================================
-  // DIALOGS + ORDER CREATION (unchanged from your version)
+  // DIALOGS + ORDER CREATION
   // ======================================================
 
   void _showClearCartDialog(BuildContext context) {
@@ -446,5 +716,11 @@ class CartScreen extends StatelessWidget {
           SnackBar(content: Text("Error al enviar pedido: $e")),
         );
       }
+    }
+
+    @override
+    void dispose() {
+      _statusChecker?.cancel();
+      super.dispose();
     }
 }

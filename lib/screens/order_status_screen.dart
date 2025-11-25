@@ -9,8 +9,6 @@ class OrderStatusScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-
-    // Check if user is null before building
     if (user == null) {
       return Scaffold(
         appBar: AppBar(
