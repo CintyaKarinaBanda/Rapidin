@@ -1,13 +1,14 @@
 {
-    "name": "rapidin",
-    "short_name": "rapidin",
+    "name": "Rapidin - Gestión de Pedidos",
+    "short_name": "Rapidin",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#FF9800",
+    "theme_color": "#FF9800",
+    "description": "Aplicación para gestión de pedidos en restaurantes con capacidad offline",
+    "orientation": "any",
     "prefer_related_applications": false,
+    "categories": ["food", "business", "productivity"],
     "icons": [
         {
             "src": "icons/Icon-192.png",

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
+import 'utils/responsive_helper.dart';
 
 import 'ble_module/screens/distance_screen.dart';
 import 'screens/product_detail_screen.dart';
@@ -80,43 +81,49 @@ class HomeView extends StatelessWidget {
       ),
 
       // BODY
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('dishes').snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: ResponsiveHelper.getMaxWidth(context),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(ResponsiveHelper.isDesktop(context) ? 24 : 16),
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('dishes').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return const Center(child: Text("No hay platillos disponibles"));
-            }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text("No hay platillos disponibles"));
+                }
 
-            final docs = snapshot.data!.docs;
+                final docs = snapshot.data!.docs;
 
-            return GridView.builder(
-              itemCount: docs.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.8,
-              ),
-              itemBuilder: (context, index) {
-                final data = docs[index].data() as Map<String, dynamic>;
+                return GridView.builder(
+                  itemCount: docs.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: ResponsiveHelper.getGridColumns(context),
+                    crossAxisSpacing: ResponsiveHelper.isDesktop(context) ? 20 : 12,
+                    mainAxisSpacing: ResponsiveHelper.isDesktop(context) ? 20 : 12,
+                    childAspectRatio: ResponsiveHelper.isDesktop(context) ? 0.9 : 0.8,
+                  ),
+                  itemBuilder: (context, index) {
+                    final data = docs[index].data() as Map<String, dynamic>;
 
-                final item = {
-                  'name': data['name'] ?? 'Sin nombre',
-                  'price': (data['price'] ?? 0).toDouble(),
-                  'description': data['available'] == true ? "Disponible" : "No disponible",
-                };
+                    final item = {
+                      'name': data['name'] ?? 'Sin nombre',
+                      'price': (data['price'] ?? 0).toDouble(),
+                      'description': data['available'] == true ? "Disponible" : "No disponible",
+                    };
 
-
-                return _buildMenuCard(context, item);
+                    return _buildMenuCard(context, item);
+                  },
+                );
               },
-            );
-          },
+            ),
+          ),
         ),
       ),
     );

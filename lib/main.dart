@@ -9,6 +9,7 @@ import 'cook_view.dart';
 import 'admin_home_view.dart';
 import 'providers/cart_provider.dart';
 import 'providers/auth_provider.dart';
+import 'services/notification_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 
@@ -20,6 +21,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  // Initialize notifications
+  await NotificationService.initialize();
 
   runApp(const MyApp());
 }
